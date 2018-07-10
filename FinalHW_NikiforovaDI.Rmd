@@ -1,0 +1,125 @@
+---
+title: "Final HomeWork"
+author: "Nikiforova DI"
+date: '6 july 2018  '
+output: 
+  html_document:
+    theme: united
+    highlight: tango
+    toc: true
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1.Выбор набора данных.
+
+  Для анализа был взят набор данных с kaggle.com под названием [Super Heroes Dataset](https://www.kaggle.com/claudiodavi/superhero-set). 
+    
+  Данный набор содержит информацию о супергероях и их характеристиках.
+  
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+  library(tidyverse)
+  library(rio)
+  library(skimr)
+  library(stats)
+  library(corrplot)
+```
+  
+#2.Описательный анализ данных
+```{r,warning=FALSE}
+heroes <- import("heroes_information.csv")
+glimpse (heroes)
+skim (heroes)
+
+```
+
+Набор содержит **11** переменных и **734** наблюдения.
+
+```{r,warning=FALSE}
+heroes <- heroes %>%
+  mutate_at(vars(-V1, -Height, -Weight), factor)
+skim(heroes)
+
+heroes <- mutate(heroes, Race = factor(Race))
+qplot(data = heroes , x = Publisher, fill = Gender)+
+  labs(x = "Издатель", y ="Количество",  title = "Количество супергероев по издателям")+
+  coord_flip()
+```
+
+Построим гистограмму для комиксов Marvel
+
+
+```{r}
+heroes_toprace<- group_by(heroes, Publisher, Race, Alignment) %>% summarise(freq = n())
+heroes_toprace
+
+heroes_marvel<-filter(heroes, Publisher == 'Marvel Comics')
+
+qplot (data = heroes_marvel, x= Race, fill = Gender)+
+  labs(x = "Раса супергероя",y ="Количество", title = "Расы супергероев", subtitle = "Marvel Comics")+
+    coord_flip()
+```
+
+Посмотрим, как распределены расы в комиксах DC
+```{r}
+heroes_dc<-filter(heroes, Publisher == 'DC Comics')
+
+qplot (data = heroes_dc, x= Race, fill = Gender)+
+  labs(x = "Раса супергероя",y ="Количество", title = "Расы супергероев", subtitle = "DC Comics")+
+    coord_flip()
+```
+
+Рассмотрим распределение роста в зависимости от расы в комиксам Marvel
+
+```{r}
+qplot (data = heroes_marvel, x = Race, y = Height)+
+  labs(x = "Рост",y ="Раса супергероя", title = "Распределение супергероев по росту", subtitle = "Marvel")+
+    coord_flip()
+```
+
+И сравним с комиксами DC
+
+```{r}
+qplot (data = heroes_dc, x = Race, y = Height)+
+  labs(x = "Рост",y ="Раса супергероя", title = "Распределение супергероев по росту", subtitle = "DC Comics")+
+    coord_flip()
+```
+
+
+Отсортируем комиксы двух издателей: DC и Marvel и сравним им.
+Для наглядности объединим все нечеловеческие расы в отдельную категорию "NonHuman" и посмотрим насколько они "дружелюбны"
+
+```{r}
+heroes_pub <-filter(heroes, Publisher == 'Marvel Comics'| Publisher == 'DC Comics')
+
+table(heroes_pub$Race)
+heroes_mut <- mutate(heroes_pub, Race = fct_collapse(Race, NonHuman = c('-', 'Alien',"Animal", 'Alpha','Amazon', 'Android', 'Asgardian', 'Atlantean', 'Bizarro', 'Bolovaxian', 'Clone', 'Cosmic Entity','Cyborg', 'Czarnian', 'Dathomirian Zabrak', 'Demi-God', 'Demon', 'Eternal', 'Flora Colossus','Frost Giant', 'God / Eternal', 'Gorilla', 'Gungan', 'Human-Kree', 'Human-Spartoi', 'Human-Vulcan', 'Human-Vuldarian', 'Human / Altered', 'Human / Clone', 'Human / Cosmic', 'Human / Radiation', 'Icthyo Sapien', 'Inhuman', 'Kaiju', 'Kakarantharaian', 'Korugaran', 'Kryptonian', 'Luphomoid', 'Maiar', 'Martian', 'Metahuman', 'Mutant', 'Mutant / Clone', 'New God', 'Neyaphem', 'Parademon', 'Planet', 'Rodian', 'Saiyan', 'Spartoi', 'Strontian', 'Symbiote', 'Talokite', 'Tamaranean', 'Ungaran', 'Vampire', 'Xenomorph XX121', 'Yautja', "Yoda's species",'Zen-Whoberian','Zombie' )))
+#table(heroes_mut$Race)
+
+ggplot (heroes_mut, aes (x = Race, fill = Alignment))+
+  geom_bar()+
+  facet_grid(Publisher ~ .)+
+  labs(x = "Мутант/Человек",y ="Количество", title = "Распределение дружелюбности", subtitle = "DC Comics vs Marvel Comics")+
+    coord_flip()
+
+```
+
+Построим корреляционную матрицу и визулируем ее. 
+
+```{r}
+cor.test(heroes$Height,heroes$Weight)
+cr <- cor(heroes$V1,heroes$Weight)
+heroes_cor<- data.frame(h=c(heroes[7]),w=c(heroes[11]))
+heroes_cor[is.na(heroes_cor)]<-0
+heroes_cor1<-cor(heroes_cor)
+corrplot(heroes_cor1,method = 'pie',bg = 'lightYellow',addCoef.col = 'white')
+
+```
+
+*В связи с тем, что со статистикой я не работаю, то остальные пункты домашнего задания, к сожалению, не сделаны.
+Данный курс помог мне освоить базовые принципы работы с R.
+
+Спасибо большое за Ваш курс!:)
